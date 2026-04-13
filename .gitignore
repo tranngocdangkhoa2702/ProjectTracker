@@ -1,10 +1,11 @@
-# Các file của PyCharm
+# PyCharm
 .idea/
 .venv/
 
-# Các file Python tạm
+# Python
 __pycache__/
 *.pyc
 
-# Database (để tránh lộ dữ liệu cá nhân)
+# Database
 *.db
+*.sqlite3
