@@ -1,0 +1,57 @@
+[
+    {
+        "project_id": "HUIT01",
+        "name": "Hệ thống Quản lý Thư viện",
+        "description": "Quản lý mượn trả sách, tra cứu tài liệu và quản lý thẻ sinh viên HUIT."
+    },
+    {
+        "project_id": "HUIT02",
+        "name": "Ứng dụng Theo dõi Tiến độ Đồ án",
+        "description": "Phần mềm desktop sử dụng Python giúp sinh viên quản lý task và deadline."
+    },
+    {
+        "project_id": "HUIT03",
+        "name": "Website Bán Linh kiện Máy tính",
+        "description": "Trang thương mại điện tử tích hợp giỏ hàng và thanh toán trực tuyến."
+    },
+    {
+        "project_id": "HUIT04",
+        "name": "Phần mềm Quản lý Kho hàng",
+        "description": "Tối ưu hóa quy trình nhập xuất kho, cảnh báo hàng tồn kho sắp hết."
+    },
+    {
+        "project_id": "HUIT05",
+        "name": "Chatbot Hỗ trợ Đào tạo AI",
+        "description": "Giải đáp tự động các thắc mắc về quy chế học vụ và đăng ký môn học."
+    },
+    {
+        "project_id": "HUIT06",
+        "name": "Hệ thống Điểm danh Sinh viên",
+        "description": "Sử dụng nhận diện khuôn mặt OpenCV để điểm danh sinh viên trong lớp."
+    },
+    {
+        "project_id": "HUIT07",
+        "name": "Ứng dụng Quản lý Chi tiêu Cá nhân",
+        "description": "Theo dõi thu nhập, chi phí và biểu đồ phân tích tài chính hàng tháng."
+    },
+    {
+        "project_id": "HUIT08",
+        "name": "Cổng Thông tin Việc làm HUIT",
+        "description": "Kết nối doanh nghiệp với sinh viên thực tập ngành An toàn thông tin."
+    },
+    {
+        "project_id": "HUIT09",
+        "name": "Tool Scan Lỗ hổng Bảo mật Web",
+        "description": "Quét và phát hiện các lỗi bảo mật cơ bản như SQL Injection, XSS."
+    },
+    {
+        "project_id": "HUIT10",
+        "name": "Hệ thống Quản lý Bãi giữ xe",
+        "description": "Nhận diện biển số xe và quản lý lượt vào ra tự động tại cổng trường."
+    },
+    {
+        "project_id": "HUIT11",
+        "name": "Hệ Thống Camera Thông Minh",
+        "description": "Giám sát"
+    }
+]
