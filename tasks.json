@@ -1,0 +1,51 @@
+[
+    {
+        "task_id": "T01",
+        "name": "Thiết kế giao diện Login",
+        "deadline": "15/04",
+        "priority": "1 (P1)",
+        "status": "Todo"
+    },
+    {
+        "task_id": "T02",
+        "name": "Cài đặt thư viện CustomTkinter",
+        "deadline": "12/04",
+        "priority": "1 (P1)",
+        "status": "Done"
+    },
+    {
+        "task_id": "T03",
+        "name": "Viết báo cáo đồ án chương 1",
+        "deadline": "20/04",
+        "priority": "2 (P2)",
+        "status": "Todo"
+    },
+    {
+        "task_id": "T04",
+        "name": "Fix lỗi hiển thị ảnh nền",
+        "deadline": "14/04",
+        "priority": "2 (P2)",
+        "status": "Todo"
+    },
+    {
+        "task_id": "T05",
+        "name": "Tìm hiểu về mã hóa mật khẩu",
+        "deadline": "25/04",
+        "priority": "3 (P3)",
+        "status": "Todo"
+    },
+    {
+        "task_id": "T06",
+        "name": "Dọn dẹp file rác trước khi nén",
+        "deadline": "30/04",
+        "priority": "4 (P4)",
+        "status": "Todo"
+    },
+    {
+        "task_id": "T07",
+        "name": "Làm Woed",
+        "deadline": "20/04",
+        "priority": "3 (P3)",
+        "status": "Todo"
+    }
+]
