@@ -1,101 +1,180 @@
 import customtkinter as ctk
 from tkinter import messagebox
 
-from ProjectTracker.viewmodels.project_manager_viewmodel import ProjectViewModel
+from viewmodels.project_manager_viewmodel import ProjectViewModel
 
 
-class AddProjectDialog(ctk.CTkToplevel):
-    """Cửa sổ Popup thêm dự án"""
+class ProjectDialog(ctk.CTkToplevel):
+    """Dialog thêm/sửa dự án."""
 
-    def __init__(self, parent, on_save_callback):
+    def __init__(self, parent, on_save_callback, project=None):
+        """Khởi tạo dialog theo mode tạo mới hoặc cập nhật."""
         super().__init__(parent)
-        self.title("Thêm Dự Án Mới")
-        self.geometry("350x400")
-        self.grab_set()  # Giữ focus vào dialog
+        self.title("Dự án")
+        self.geometry("430x430")
+        self.resizable(False, False)
+        self.grab_set()
+        self.project = project
 
-        ctk.CTkLabel(self, text="NHẬP THÔNG TIN DỰ ÁN", font=("Arial", 16, "bold")).pack(pady=20)
+        ctk.CTkLabel(self, text="Thêm dự án mới" if project is None else "Cập nhật dự án", font=("Segoe UI", 20, "bold")).pack(
+            pady=(24, 8)
+        )
 
-        self.entry_id = ctk.CTkEntry(self, placeholder_text="ID Dự án...", width=250)
-        self.entry_id.pack(pady=10)
+        form = ctk.CTkFrame(self, fg_color="transparent")
+        form.pack(fill="x", padx=32, pady=8)
 
-        self.entry_name = ctk.CTkEntry(self, placeholder_text="Tên dự án...", width=250)
-        self.entry_name.pack(pady=10)
+        self.entry_id = self._entry(form, "ID dự án", project.project_id if project else "")
+        self.entry_name = self._entry(form, "Tên dự án", project.name if project else "")
+        self.entry_desc = ctk.CTkTextbox(form, height=110, corner_radius=8)
+        self.entry_desc.insert("1.0", project.description if project else "")
+        self.entry_desc.pack(fill="x", pady=10)
 
-        self.entry_desc = ctk.CTkEntry(self, placeholder_text="Mô tả...", width=250)
-        self.entry_desc.pack(pady=10)
+        buttons = ctk.CTkFrame(self, fg_color="transparent")
+        buttons.pack(fill="x", padx=32, pady=(16, 0))
+        ctk.CTkButton(buttons, text="Hủy", fg_color="#3b3f45", hover_color="#4b5563", command=self.destroy).pack(
+            side="left", fill="x", expand=True, padx=(0, 6)
+        )
+        ctk.CTkButton(
+            buttons,
+            text="Lưu",
+            fg_color="#16a34a",
+            hover_color="#15803d",
+            command=lambda: on_save_callback(
+                self.entry_id.get(),
+                self.entry_name.get(),
+                self.entry_desc.get("1.0", "end").strip(),
+                self,
+                self.project,
+            ),
+        ).pack(side="left", fill="x", expand=True, padx=(6, 0))
 
-        self.btn_save = ctk.CTkButton(self, text="Lưu Dự Án", fg_color="green",
-                                      command=lambda: on_save_callback(
-                                          self.entry_id.get(),
-                                          self.entry_name.get(),
-                                          self.entry_desc.get(),
-                                          self))
-        self.btn_save.pack(pady=20)
+    def _entry(self, parent, placeholder, value):
+        """Tạo ô nhập liệu dùng chung."""
+        entry = ctk.CTkEntry(parent, placeholder_text=placeholder, height=40)
+        entry.insert(0, value)
+        entry.pack(fill="x", pady=10)
+        return entry
+
 
 class ProjectsView(ctk.CTkFrame):
-    def __init__(self, master):
+    """Màn hình quản lý dự án."""
+
+    def __init__(self, master, actor="system", can_manage=True):
+        """Khởi tạo view và nạp dữ liệu dự án."""
         super().__init__(master, fg_color="transparent")
-        self.view_model = ProjectViewModel()
+        self.can_manage = can_manage
+        self.view_model = ProjectViewModel(actor=actor, can_manage=can_manage)
         self.setup_ui()
         self.refresh_table()
 
     def setup_ui(self):
-        # Tiêu đề
-        ctk.CTkLabel(self, text="📁 QUẢN LÝ DỰ ÁN (PROJECTS)", font=("Arial", 22, "bold")).pack(pady=20, anchor="w",
-                                                                                               padx=20)
+        """Dựng toàn bộ thành phần UI của màn dự án."""
+        header = ctk.CTkFrame(self, fg_color="transparent")
+        header.pack(fill="x", padx=24, pady=(24, 10))
 
-        # Thanh công cụ
+        ctk.CTkLabel(header, text="Quản lý dự án", font=("Segoe UI", 26, "bold")).pack(side="left")
+        self.add_btn = ctk.CTkButton(
+            header, text="+ Thêm dự án", fg_color="#16a34a", hover_color="#15803d", width=130, command=self.open_add_dialog
+        )
+        self.add_btn.pack(side="right")
+
         toolbar = ctk.CTkFrame(self, fg_color="transparent")
-        toolbar.pack(fill="x", padx=20, pady=10)
+        toolbar.pack(fill="x", padx=24, pady=(0, 12))
+        self.search_entry = ctk.CTkEntry(toolbar, placeholder_text="Tìm theo ID, tên hoặc mô tả...", height=36)
+        self.search_entry.pack(side="left", fill="x", expand=True)
+        self.search_entry.bind("<KeyRelease>", self.handle_search)
+        self.count_label = ctk.CTkLabel(toolbar, text="", text_color="#94a3b8", width=120)
+        self.count_label.pack(side="right", padx=(12, 0))
 
-        self.search_entry = ctk.CTkEntry(toolbar, placeholder_text="Tìm tên dự án hoặc ID...", width=250)
-        self.search_entry.pack(side="left", padx=5)
-        self.search_entry.bind("<KeyRelease>", self.handle_search)  # Tìm kiếm ngay khi gõ
+        self.table_container = ctk.CTkScrollableFrame(self, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
+        self.table_container.pack(pady=(0, 24), padx=24, fill="both", expand=True)
 
-        self.btn_add = ctk.CTkButton(toolbar, text="+ Thêm Dự Án", fg_color="#28a745", hover_color="#218838",
-                                     command=self.open_add_dialog)
-        self.btn_add.pack(side="right", padx=5)
-
-        # Khu vực bảng hiển thị (Sạch sẽ hơn TextBox)
-        self.table_container = ctk.CTkScrollableFrame(self, fg_color="#2b2b2b")
-        self.table_container.pack(pady=10, padx=20, fill="both", expand=True)
+        if not self.can_manage:
+            self.add_btn.configure(state="disabled", fg_color="#64748b")
 
     def refresh_table(self, data=None):
-        # Xóa các dòng cũ
+        """Render lại bảng dự án theo dữ liệu hiện tại."""
         for child in self.table_container.winfo_children():
             child.destroy()
 
         projects = data if data is not None else self.view_model.display_projects
+        self.count_label.configure(text=f"{len(projects)} dự án")
 
-        # Tiêu đề cột
-        header_frame = ctk.CTkFrame(self.table_container, fg_color="#3d3d3d")
-        header_frame.pack(fill="x", pady=2)
-        ctk.CTkLabel(header_frame, text="ID", width=100, font=("Arial", 12, "bold")).pack(side="left", padx=10)
-        ctk.CTkLabel(header_frame, text="Tên Dự Án", width=200, font=("Arial", 12, "bold"), anchor="w").pack(
-            side="left", padx=10)
-        ctk.CTkLabel(header_frame, text="Mô Tả", font=("Arial", 12, "bold"), anchor="w").pack(side="left", padx=10,
-                                                                                              fill="x", expand=True)
+        header = ctk.CTkFrame(self.table_container, fg_color=("#e5e7eb", "#242424"), corner_radius=8)
+        header.pack(fill="x", pady=(0, 8), padx=4)
+        columns = [("ID", 95), ("Tên dự án", 230), ("Mô tả", 330), ("Thao tác", 150)]
+        for text, width in columns:
+            ctk.CTkLabel(header, text=text, width=width, font=("Segoe UI", 12, "bold"), anchor="w").pack(side="left", padx=8, pady=10)
 
-        # Đổ dữ liệu
-        for p in projects:
-            row = ctk.CTkFrame(self.table_container, fg_color="transparent")
-            row.pack(fill="x", pady=1)
-            ctk.CTkLabel(row, text=p.project_id, width=100).pack(side="left", padx=10)
-            ctk.CTkLabel(row, text=p.name, width=200, anchor="w").pack(side="left", padx=10)
-            ctk.CTkLabel(row, text=p.description, anchor="w").pack(side="left", padx=10, fill="x", expand=True)
+        if not projects:
+            ctk.CTkLabel(self.table_container, text="Chưa có dự án phù hợp.", text_color="#94a3b8", font=("Segoe UI", 14)).pack(pady=40)
+            return
 
-    def handle_search(self, event):
-        query = self.search_entry.get()
-        filtered_data = self.view_model.search(query)
-        self.refresh_table(filtered_data)
+        for index, project in enumerate(projects):
+            row_color = ("#ffffff", "#202020") if index % 2 == 0 else ("#f9fafb", "#1b1b1b")
+            row = ctk.CTkFrame(self.table_container, fg_color=row_color, corner_radius=8)
+            row.pack(fill="x", pady=3, padx=4)
+
+            ctk.CTkLabel(row, text=project.project_id, width=95, anchor="w").pack(side="left", padx=8, pady=8)
+            ctk.CTkLabel(row, text=project.name, width=230, anchor="w", wraplength=220).pack(side="left", padx=8, pady=8)
+            ctk.CTkLabel(row, text=project.description or "-", width=330, anchor="w", wraplength=320).pack(side="left", padx=8, pady=8)
+
+            actions = ctk.CTkFrame(row, fg_color="transparent", width=150)
+            actions.pack(side="left", padx=8, pady=6)
+            btn_edit = ctk.CTkButton(
+                actions, text="Sửa", width=58, height=28, fg_color="#52525b", hover_color="#3f3f46", command=lambda p=project: self.open_edit_dialog(p)
+            )
+            btn_edit.pack(side="left", padx=2)
+            btn_delete = ctk.CTkButton(
+                actions,
+                text="Xóa",
+                width=58,
+                height=28,
+                fg_color="#dc2626",
+                hover_color="#b91c1c",
+                command=lambda project_id=project.project_id: self.delete_project(project_id),
+            )
+            btn_delete.pack(side="left", padx=2)
+            if not self.can_manage:
+                btn_edit.configure(state="disabled", fg_color="#64748b")
+                btn_delete.configure(state="disabled", fg_color="#64748b")
+
+    def handle_search(self, _event=None):
+        """Xử lý tìm kiếm realtime theo ô search."""
+        self.refresh_table(self.view_model.search(self.search_entry.get()))
 
     def open_add_dialog(self):
-        AddProjectDialog(self, self.handle_add_save)
+        """Mở dialog tạo dự án mới."""
+        if not self.can_manage:
+            messagebox.showwarning("Thông báo", "Bạn không có quyền thêm dự án.")
+            return
+        ProjectDialog(self, self.handle_save)
 
-    def handle_add_save(self, p_id, p_name, p_desc, dialog_window):
-        success, message = self.view_model.validate_and_add(p_id, p_name, p_desc)
+    def open_edit_dialog(self, project):
+        """Mở dialog chỉnh sửa dự án hiện có."""
+        if not self.can_manage:
+            messagebox.showwarning("Thông báo", "Bạn không có quyền sửa dự án.")
+            return
+        ProjectDialog(self, self.handle_save, project)
+
+    def handle_save(self, project_id, name, description, dialog, original_project):
+        """Lưu dữ liệu dự án từ dialog về viewmodel."""
+        if original_project is None:
+            success, message = self.view_model.validate_and_add(project_id, name, description)
+        else:
+            success, message = self.view_model.update_project(original_project.project_id, project_id, name, description)
+
         if success:
-            dialog_window.destroy()
-            self.refresh_table()
+            dialog.destroy()
+            self.handle_search()
         else:
             messagebox.showwarning("Thông báo", message)
+
+    def delete_project(self, project_id):
+        """Xóa dự án sau khi xác nhận."""
+        if not messagebox.askyesno("Xác nhận", f"Xóa dự án '{project_id}'?"):
+            return
+        success, message = self.view_model.delete_project(project_id)
+        if not success:
+            messagebox.showwarning("Thông báo", message)
+        self.handle_search()

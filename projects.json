@@ -32,7 +32,7 @@
     {
         "project_id": "HUIT07",
         "name": "Ứng dụng Quản lý Chi tiêu Cá nhân",
-        "description": "Theo dõi thu nhập, chi phí và biểu đồ phân tích tài chính hàng tháng."
+        "description": "Theo dõi thu nhập, chi phí và biểu đồ phân tích tài chính hằng tháng."
     },
     {
         "project_id": "HUIT08",
@@ -51,7 +51,7 @@
     },
     {
         "project_id": "HUIT11",
-        "name": "Hệ Thống Camera Thông Minh",
-        "description": "Giám sát"
+        "name": "Hệ thống Camera Thông minh",
+        "description": "Giám sát khu vực học tập và phát hiện chuyển động bất thường."
     }
 ]
