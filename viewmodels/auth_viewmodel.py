@@ -5,30 +5,16 @@ from models.user_model import UserModel
 
 
 class AuthViewModel:
-    """
-    Mục đích:
-    - Xử lý xác thực, phân quyền và quản trị tài khoản.
-
-    Input:
-    - Các dữ liệu username/password/role từ UI.
-
-    Output:
-    - Kết quả nghiệp vụ dạng (success, message) hoặc thông tin user.
-
-    Luồng xử lý chính:
-    - Validate dữ liệu đầu vào.
-    - Gọi UserModel thao tác dữ liệu.
-    - Ghi nhật ký thao tác qua AuditLogModel.
-    """
+    """Xử lý đăng nhập, đăng ký và phân quyền người dùng."""
 
     def __init__(self):
-        """Khởi tạo các model cần cho auth và audit."""
+        """Tạo model user và audit log."""
         self.model = UserModel()
         self.audit = AuditLogModel()
         self.current_user = None
 
     def validate_password(self, password):
-        """Validate chính sách mật khẩu."""
+        """Kiểm tra mật khẩu theo yêu cầu của bài."""
         if len(password) < 8:
             return False, "Mật khẩu phải có ít nhất 8 ký tự!"
         if not password[0].isupper():
@@ -40,7 +26,7 @@ class AuthViewModel:
         return True, ""
 
     def register(self, username, password):
-        """Đăng ký tài khoản member từ màn hình public."""
+        """Đăng ký tài khoản thành viên."""
         username = username.strip()
         if not username:
             return False, "Vui lòng nhập tên tài khoản!"
@@ -55,23 +41,7 @@ class AuthViewModel:
         return success, message
 
     def login(self, username, password):
-        """
-        Mục đích:
-        - Xác thực đăng nhập và thiết lập phiên người dùng hiện tại.
-
-        Input:
-        - username: tên đăng nhập.
-        - password: mật khẩu nhập từ UI.
-
-        Output:
-        - (True, message) nếu đăng nhập thành công.
-        - (False, message) nếu thất bại.
-
-        Luồng xử lý chính:
-        - Gọi model.authenticate.
-        - Nếu hợp lệ: lưu self.current_user và ghi audit login.
-        - Nếu không hợp lệ: trả lỗi xác thực.
-        """
+        """Kiểm tra đăng nhập và lưu user hiện tại nếu hợp lệ."""
         user = self.model.authenticate(username.strip(), password)
         if user:
             self.current_user = user
@@ -100,27 +70,13 @@ class AuthViewModel:
         return self.is_leader_or_admin()
 
     def list_users(self):
-        """Chỉ admin được xem danh sách tài khoản."""
+        """Lấy danh sách tài khoản nếu đang là admin."""
         if not self.is_admin():
             return []
         return self.model.list_users()
 
     def create_user(self, username, password, role, is_active=True):
-        """
-        Mục đích:
-        - Cho admin tạo tài khoản mới theo role chỉ định.
-
-        Input:
-        - username, password, role, is_active.
-
-        Output:
-        - (success, message) từ tầng model.
-
-        Luồng xử lý chính:
-        - Kiểm tra quyền admin.
-        - Validate dữ liệu và chính sách mật khẩu.
-        - Thêm user, ghi audit nếu thành công.
-        """
+        """Admin tạo tài khoản mới."""
         if not self.is_admin():
             return False, "Bạn không có quyền quản lý tài khoản."
         username = username.strip()
@@ -138,21 +94,7 @@ class AuthViewModel:
         return success, message
 
     def update_user(self, user_id, username, role, is_active):
-        """
-        Mục đích:
-        - Cập nhật thông tin tài khoản bởi admin.
-
-        Input:
-        - user_id, username, role, is_active.
-
-        Output:
-        - (success, message) phản hồi kết quả cập nhật.
-
-        Luồng xử lý chính:
-        - Kiểm tra quyền admin và validate đầu vào.
-        - Chặn hạ quyền/khóa admin cuối cùng.
-        - Cập nhật model, đồng bộ current_user nếu cần, ghi audit.
-        """
+        """Admin cập nhật thông tin tài khoản."""
         if not self.is_admin():
             return False, "Bạn không có quyền quản lý tài khoản."
         username = username.strip()

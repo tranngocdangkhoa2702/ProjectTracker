@@ -14,25 +14,9 @@ from views.users_view import UsersView
 
 
 class ProjectManagerApp(ctk.CTk):
-    """
-    Mục đích:
-    - Điều phối toàn bộ giao diện chính của ứng dụng.
-    - Điều hướng giữa các màn theo quyền người dùng.
-
-    Input:
-    - Không có tham số đầu vào từ bên ngoài khi khởi tạo.
-
-    Output:
-    - Một cửa sổ ứng dụng CustomTkinter đã sẵn sàng chạy.
-
-    Luồng xử lý chính:
-    - Khởi tạo auth viewmodel.
-    - Hiển thị màn xác thực.
-    - Sau khi đăng nhập, dựng dashboard theo role.
-    """
+    """Class chính dùng để điều khiển các màn hình của chương trình."""
 
     def __init__(self):
-        """Khởi tạo cửa sổ ứng dụng và điều hướng vào màn auth."""
         super().__init__()
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
@@ -52,7 +36,7 @@ class ProjectManagerApp(ctk.CTk):
         self.show_auth_screen()
 
     def clear_window(self):
-        """Xóa toàn bộ widget trên cửa sổ hiện tại."""
+        """Xóa các widget đang có trên cửa sổ."""
         if self._logout_after_id is not None:
             self.after_cancel(self._logout_after_id)
             self._logout_after_id = None
@@ -60,7 +44,7 @@ class ProjectManagerApp(ctk.CTk):
             widget.destroy()
 
     def show_auth_screen(self):
-        """Hiển thị màn đăng nhập/đăng ký."""
+        """Mở màn hình đăng nhập."""
         self.auth_vm.logout()
         self.clear_window()
         self.geometry("500x620")
@@ -72,21 +56,7 @@ class ProjectManagerApp(ctk.CTk):
         self.auth_frame.pack(fill="both", expand=True, padx=46, pady=46)
 
     def show_main_dashboard(self):
-        """
-        Mục đích:
-        - Dựng màn dashboard sau khi đăng nhập.
-
-        Input:
-        - Không nhận tham số trực tiếp.
-
-        Output:
-        - Sidebar + vùng nội dung được render theo role hiện tại.
-
-        Luồng xử lý chính:
-        - Xóa giao diện cũ.
-        - Tạo sidebar với menu phù hợp quyền.
-        - Mở view mặc định là Dự án.
-        """
+        """Hiển thị giao diện chính sau khi đăng nhập thành công."""
         self.clear_window()
         self.geometry("1240x780")
         self.minsize(1040, 680)
@@ -135,12 +105,12 @@ class ProjectManagerApp(ctk.CTk):
         self.navigate("projects", self.show_projects_view)
 
     def current_actor(self):
-        """Lấy username hiện tại để ghi audit log."""
+        """Lấy tên user hiện tại để ghi log."""
         user = self.auth_vm.current_user or {}
         return user.get("username", "system")
 
     def create_user_badge(self, parent):
-        """Hiển thị thông tin user đang đăng nhập ở sidebar."""
+        """Hiển thị thông tin tài khoản trên sidebar."""
         user = self.auth_vm.current_user or {}
         role_map = {"admin": "Admin", "leader": "Leader", "member": "Member"}
         role = role_map.get(user.get("role"), "Member")
@@ -154,7 +124,7 @@ class ProjectManagerApp(ctk.CTk):
         )
 
     def create_sidebar_button(self, parent, text, command):
-        """Factory tạo button sidebar cùng style chung."""
+        """Tạo nút menu bên trái."""
         return ctk.CTkButton(
             parent,
             text=text,
@@ -169,7 +139,7 @@ class ProjectManagerApp(ctk.CTk):
         )
 
     def navigate(self, active_key, command):
-        """Đổi trạng thái active của menu và render view tương ứng."""
+        """Chuyển màn hình theo nút menu được chọn."""
         for key, button in self.sidebar_buttons.items():
             if key == active_key:
                 button.configure(fg_color=("#dbeafe", "#1e3a8a"), text_color=("#1d4ed8", "#ffffff"))
@@ -178,45 +148,17 @@ class ProjectManagerApp(ctk.CTk):
         command()
 
     def clear_content_area(self):
-        """Xóa vùng nội dung bên phải trước khi chuyển view."""
+        """Dọn vùng nội dung trước khi mở view mới."""
         for widget in self.content_area.winfo_children():
             widget.destroy()
 
     def show_projects_view(self):
-        """
-        Mục đích:
-        - Mở màn quản lý dự án.
-
-        Input:
-        - Dùng actor hiện tại và quyền quản lý từ auth_vm.
-
-        Output:
-        - Render ProjectsView vào content area.
-
-        Luồng xử lý chính:
-        - Xóa content cũ.
-        - Khởi tạo ProjectsView với context quyền.
-        - Pack view vào vùng nội dung.
-        """
+        """Mở màn quản lý dự án."""
         self.clear_content_area()
         ProjectsView(self.content_area, actor=self.current_actor(), can_manage=self.auth_vm.can_manage_work()).pack(fill="both", expand=True)
 
     def show_tasks_view(self):
-        """
-        Mục đích:
-        - Mở màn quản lý công việc.
-
-        Input:
-        - Dùng actor hiện tại và quyền quản lý từ auth_vm.
-
-        Output:
-        - Render TasksView và lưu tham chiếu self.tasks_page.
-
-        Luồng xử lý chính:
-        - Xóa content cũ.
-        - Khởi tạo TasksView theo quyền.
-        - Pack view vào vùng nội dung.
-        """
+        """Mở màn quản lý công việc."""
         self.clear_content_area()
         self.tasks_page = TasksView(self.content_area, actor=self.current_actor(), can_manage=self.auth_vm.can_manage_work())
         self.tasks_page.pack(fill="both", expand=True)
@@ -253,21 +195,7 @@ class ProjectManagerApp(ctk.CTk):
         UsersView(self.content_area, self.auth_vm).pack(fill="both", expand=True)
 
     def start_logout_flow(self):
-        """
-        Mục đích:
-        - Hiển thị màn đăng xuất có tiến trình trước khi về login.
-
-        Input:
-        - Không nhận tham số trực tiếp.
-
-        Output:
-        - Màn hình trung gian đăng xuất + progress bar.
-
-        Luồng xử lý chính:
-        - Xóa giao diện dashboard.
-        - Dựng panel đăng xuất.
-        - Bắt đầu animate progress và kết thúc bằng show_auth_screen.
-        """
+        """Hiển thị màn chờ đăng xuất."""
         self.clear_window()
         self.geometry("500x620")
         self.minsize(500, 580)
@@ -293,7 +221,7 @@ class ProjectManagerApp(ctk.CTk):
         self._animate_logout_progress(0)
 
     def _animate_logout_progress(self, value):
-        """Animate progress đăng xuất và kết thúc phiên."""
+        """Chạy thanh tiến trình khi đăng xuất."""
         self.logout_progress.set(value / 100)
         self.logout_percent_label.configure(text=f"{value}%")
         if value >= 100:
@@ -305,17 +233,16 @@ class ProjectManagerApp(ctk.CTk):
 
 
 class StatsView(ctk.CTkFrame):
-    """View thống kê số liệu dự án/công việc."""
+    """Màn thống kê tổng quan."""
 
     def __init__(self, master):
-        """Khởi tạo dữ liệu thống kê để render dashboard."""
         super().__init__(master, fg_color="transparent")
         self.project_vm = ProjectViewModel(can_manage=False)
         self.task_vm = TaskViewModel(can_manage=False)
         self.setup_ui()
 
     def setup_ui(self):
-        """Dựng các nhóm thống kê: card, tiến độ, ưu tiên, deadline."""
+        """Tạo giao diện thống kê."""
         ctk.CTkLabel(self, text="Thống kê tổng quan", font=("Segoe UI", 26, "bold")).pack(anchor="w", padx=24, pady=(24, 14))
         stats = self.task_vm.get_stats()
         cards = ctk.CTkFrame(self, fg_color="transparent")
@@ -373,7 +300,7 @@ class StatsView(ctk.CTkFrame):
             )
 
     def create_card(self, parent, label, value, color):
-        """Tạo card số liệu dùng lại trong khu vực thống kê."""
+        """Tạo một ô số liệu nhỏ."""
         card = ctk.CTkFrame(parent, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
         ctk.CTkLabel(card, text=label, text_color="#94a3b8", font=("Segoe UI", 13)).pack(anchor="w", padx=16, pady=(14, 2))
         ctk.CTkLabel(card, text=str(value), text_color=color, font=("Segoe UI", 30, "bold")).pack(anchor="w", padx=16, pady=(0, 14))
