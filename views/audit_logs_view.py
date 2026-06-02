@@ -6,22 +6,20 @@ from viewmodels.system_viewmodel import SystemViewModel
 class AuditLogsView(ctk.CTkFrame):
     """Màn hình xem nhật ký thao tác hệ thống."""
 
-    def __init__(self, master, actor="system"):
-        """Khởi tạo view log và tải dữ liệu ban đầu."""
+    def __init__(self, master, actor="system", actor_role="member"):
         super().__init__(master, fg_color="transparent")
-        self.vm = SystemViewModel(actor=actor)
+        self.vm = SystemViewModel(actor=actor, actor_role=actor_role)
         self.logs = []
         self.setup_ui()
         self.refresh()
 
     def setup_ui(self):
-        """Dựng giao diện lọc và danh sách log."""
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x", padx=24, pady=(24, 10))
         ctk.CTkLabel(header, text="Nhật ký hệ thống", font=("Segoe UI", 26, "bold")).pack(side="left")
         ctk.CTkButton(header, text="Làm mới", width=90, command=self.refresh).pack(side="right")
 
-        self.search = ctk.CTkEntry(self, placeholder_text="Lọc theo actor, action hoặc target...", height=36)
+        self.search = ctk.CTkEntry(self, placeholder_text="Lọc theo người thao tác, hành động hoặc đối tượng...", height=36)
         self.search.pack(fill="x", padx=24, pady=(0, 12))
         self.search.bind("<KeyRelease>", lambda _e: self.render())
 
@@ -29,12 +27,10 @@ class AuditLogsView(ctk.CTkFrame):
         self.container.pack(fill="both", expand=True, padx=24, pady=(0, 24))
 
     def refresh(self):
-        """Nạp lại log mới từ database."""
         self.logs = self.vm.list_logs(limit=500)
         self.render()
 
     def render(self):
-        """Render danh sách log theo từ khóa tìm kiếm."""
         for child in self.container.winfo_children():
             child.destroy()
 
@@ -49,7 +45,7 @@ class AuditLogsView(ctk.CTkFrame):
             or query in str(log["target_id"]).lower()
         ]
         if not logs:
-            ctk.CTkLabel(self.container, text="Không có log phù hợp.", text_color="#94a3b8").pack(pady=30)
+            ctk.CTkLabel(self.container, text="Không có nhật ký phù hợp.", text_color="#94a3b8").pack(pady=30)
             return
 
         for log in logs:

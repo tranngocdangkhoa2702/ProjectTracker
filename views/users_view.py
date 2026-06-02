@@ -3,14 +3,18 @@ import tkinter as tk
 from tkinter import messagebox
 
 
-ROLES = ["member", "leader", "admin"]
+ROLE_LABELS = {
+    "member": "Thành viên",
+    "leader": "Trưởng nhóm",
+    "admin": "Quản trị viên",
+}
+ROLE_VALUES = {label: value for value, label in ROLE_LABELS.items()}
 
 
 class UserDialog(ctk.CTkToplevel):
     """Dialog thêm/sửa tài khoản người dùng."""
 
     def __init__(self, parent, on_save_callback, user=None):
-        """Khởi tạo dialog theo mode tạo mới hoặc cập nhật user."""
         super().__init__(parent)
         self.title("Tài khoản")
         self.geometry("420x420")
@@ -32,8 +36,8 @@ class UserDialog(ctk.CTkToplevel):
         self.password_entry = ctk.CTkEntry(form, placeholder_text=password_placeholder, show="*", height=40)
         self.password_entry.pack(fill="x", pady=10)
 
-        self.role_menu = ctk.CTkOptionMenu(form, values=ROLES)
-        self.role_menu.set(user["role"] if user else "member")
+        self.role_menu = ctk.CTkOptionMenu(form, values=list(ROLE_VALUES.keys()))
+        self.role_menu.set(ROLE_LABELS.get(user["role"], "Thành viên") if user else "Thành viên")
         self.role_menu.pack(fill="x", pady=10)
 
         self.active_var = tk.BooleanVar(value=user["is_active"] if user else True)
@@ -52,7 +56,7 @@ class UserDialog(ctk.CTkToplevel):
             command=lambda: on_save_callback(
                 self.username_entry.get(),
                 self.password_entry.get(),
-                self.role_menu.get(),
+                ROLE_VALUES.get(self.role_menu.get(), "member"),
                 self.active_var.get(),
                 self,
                 self.user,
@@ -61,10 +65,9 @@ class UserDialog(ctk.CTkToplevel):
 
 
 class UsersView(ctk.CTkFrame):
-    """Màn hình quản trị tài khoản (admin)."""
+    """Màn hình quản trị tài khoản."""
 
     def __init__(self, master, auth_vm):
-        """Khởi tạo view và nạp danh sách user."""
         super().__init__(master, fg_color="transparent")
         self.auth_vm = auth_vm
         self.users = []
@@ -72,7 +75,6 @@ class UsersView(ctk.CTkFrame):
         self.refresh_table()
 
     def setup_ui(self):
-        """Dựng các thành phần UI quản lý tài khoản."""
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x", padx=24, pady=(24, 10))
         ctk.CTkLabel(header, text="Quản lý tài khoản", font=("Segoe UI", 26, "bold")).pack(side="left")
@@ -92,19 +94,16 @@ class UsersView(ctk.CTkFrame):
         self.table_container.pack(pady=(0, 24), padx=24, fill="both", expand=True)
 
     def refresh_table(self):
-        """Render lại bảng user theo bộ lọc tìm kiếm."""
         for child in self.table_container.winfo_children():
             child.destroy()
 
         query = self.search_entry.get().lower().strip() if hasattr(self, "search_entry") else ""
-        self.users = [user for user in self.auth_vm.list_users() if not query or query in user["username"].lower() or query in user["role"].lower()]
+        self.users = [
+            user
+            for user in self.auth_vm.list_users()
+            if not query or query in user["username"].lower() or query in ROLE_LABELS.get(user["role"], user["role"]).lower()
+        ]
         self.count_label.configure(text=f"{len(self.users)} tài khoản")
-
-        header = ctk.CTkFrame(self.table_container, fg_color=("#e5e7eb", "#242424"), corner_radius=8)
-        header.pack(fill="x", pady=(0, 8), padx=4)
-        columns = [("ID", 60), ("Tên đăng nhập", 230), ("Quyền", 120), ("Trạng thái", 120), ("Thao tác", 220)]
-        for text, width in columns:
-            ctk.CTkLabel(header, text=text, width=width, font=("Segoe UI", 12, "bold"), anchor="w").pack(side="left", padx=8, pady=10)
 
         if not self.users:
             ctk.CTkLabel(self.table_container, text="Chưa có tài khoản phù hợp.", text_color="#94a3b8").pack(pady=40)
@@ -113,39 +112,46 @@ class UsersView(ctk.CTkFrame):
         for index, user in enumerate(self.users):
             row_color = ("#ffffff", "#202020") if index % 2 == 0 else ("#f9fafb", "#1b1b1b")
             row = ctk.CTkFrame(self.table_container, fg_color=row_color, corner_radius=8)
-            row.pack(fill="x", pady=3, padx=4)
+            row.pack(fill="x", pady=5, padx=4)
+            row.grid_columnconfigure(1, weight=1)
 
             role_color = "#f59e0b" if user["role"] == "admin" else ("#22c55e" if user["role"] == "leader" else "#2563eb")
             status_text = "Hoạt động" if user["is_active"] else "Đã khóa"
             status_color = "#22c55e" if user["is_active"] else "#ef4444"
 
-            ctk.CTkLabel(row, text=str(user["id"]), width=60, anchor="w").pack(side="left", padx=8, pady=8)
-            ctk.CTkLabel(row, text=user["username"], width=230, anchor="w").pack(side="left", padx=8, pady=8)
-            ctk.CTkLabel(row, text=user["role"], width=120, anchor="w", text_color=role_color).pack(side="left", padx=8, pady=8)
-            ctk.CTkLabel(row, text=status_text, width=120, anchor="w", text_color=status_color).pack(side="left", padx=8, pady=8)
+            ctk.CTkLabel(row, text=f"#{user['id']}", width=56, anchor="w", text_color="#bfdbfe").grid(row=0, column=0, sticky="w", padx=12, pady=(10, 2))
+            ctk.CTkLabel(row, text=user["username"], anchor="w", font=("Segoe UI", 13, "bold")).grid(
+                row=0, column=1, sticky="ew", pady=(10, 2)
+            )
+            ctk.CTkLabel(row, text=ROLE_LABELS.get(user["role"], user["role"]), width=120, anchor="e", text_color=role_color).grid(
+                row=0, column=2, sticky="e", padx=12, pady=(10, 2)
+            )
+            ctk.CTkLabel(row, text=status_text, anchor="w", text_color=status_color).grid(row=1, column=0, columnspan=3, sticky="ew", padx=12, pady=(0, 6))
 
-            actions = ctk.CTkFrame(row, fg_color="transparent", width=220)
-            actions.pack(side="left", padx=8, pady=6)
-            ctk.CTkButton(
-                actions, text="Sửa", width=58, height=28, fg_color="#52525b", hover_color="#3f3f46", command=lambda u=user: self.open_edit_dialog(u)
-            ).pack(side="left", padx=2)
+            actions = ctk.CTkFrame(row, fg_color="transparent")
+            actions.grid(row=2, column=0, columnspan=3, sticky="ew", padx=10, pady=(0, 10))
+            ctk.CTkButton(actions, text="Sửa", width=58, height=28, fg_color="#52525b", command=lambda u=user: self.open_edit_dialog(u)).pack(
+                side="left", padx=2
+            )
             ctk.CTkButton(
                 actions, text="Xóa", width=58, height=28, fg_color="#dc2626", hover_color="#b91c1c", command=lambda user_id=user["id"]: self.delete_user(user_id)
             ).pack(side="left", padx=2)
 
     def open_add_dialog(self):
-        """Mở dialog tạo user."""
         UserDialog(self, self.handle_save)
 
     def open_edit_dialog(self, user):
-        """Mở dialog sửa user."""
         UserDialog(self, self.handle_save, user)
 
     def handle_save(self, username, password, role, is_active, dialog, original_user):
-        """Lưu dữ liệu user từ dialog."""
         if original_user is None:
             success, message = self.auth_vm.create_user(username, password, role, is_active)
         else:
+            if password.strip():
+                is_valid, message = self.auth_vm.validate_password(password)
+                if not is_valid:
+                    messagebox.showwarning("Thông báo", message)
+                    return
             success, message = self.auth_vm.update_user(original_user["id"], username, role, is_active)
             if success and password.strip():
                 success, message = self.auth_vm.reset_password(original_user["id"], password)
@@ -158,7 +164,6 @@ class UsersView(ctk.CTkFrame):
             messagebox.showwarning("Thông báo", message)
 
     def delete_user(self, user_id):
-        """Xóa tài khoản sau khi xác nhận."""
         if not messagebox.askyesno("Xác nhận", "Xóa tài khoản này?"):
             return
         success, message = self.auth_vm.delete_user(user_id)

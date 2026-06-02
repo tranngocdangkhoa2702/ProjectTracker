@@ -2,56 +2,119 @@
     {
         "project_id": "HUIT01",
         "name": "Hệ thống Quản lý Thư viện",
-        "description": "Quản lý mượn trả sách, tra cứu tài liệu và quản lý thẻ sinh viên HUIT."
+        "description": "Quản lý mượn trả sách, tra cứu tài liệu và quản lý thẻ sinh viên HUIT.",
+        "status": "Đang thực hiện",
+        "leader": "Anhdaden",
+        "members": [
+            "Keasy",
+            "MinhNguyen"
+        ],
+        "start_date": "20/05",
+        "end_date": "25/06"
     },
     {
         "project_id": "HUIT02",
         "name": "Ứng dụng Theo dõi Tiến độ Đồ án",
-        "description": "Phần mềm desktop sử dụng Python giúp sinh viên quản lý task và deadline."
+        "description": "Phần mềm desktop sử dụng Python giúp sinh viên quản lý task, deadline và phân quyền.",
+        "status": "Đang thực hiện",
+        "leader": "Anhdaden",
+        "members": [
+            "Keasy",
+            "LinhPham"
+        ],
+        "start_date": "24/05",
+        "end_date": "30/06"
     },
     {
         "project_id": "HUIT03",
         "name": "Website Bán Linh kiện Máy tính",
-        "description": "Trang thương mại điện tử tích hợp giỏ hàng và thanh toán trực tuyến."
+        "description": "Trang thương mại điện tử tích hợp giỏ hàng, đơn hàng và thanh toán thử nghiệm.",
+        "status": "Lên kế hoạch",
+        "leader": "BaoTran",
+        "members": [
+            "NamLe",
+            "TrangDo"
+        ],
+        "start_date": "01/06",
+        "end_date": "10/07"
     },
     {
         "project_id": "HUIT04",
         "name": "Phần mềm Quản lý Kho hàng",
-        "description": "Tối ưu hóa quy trình nhập xuất kho, cảnh báo hàng tồn kho sắp hết."
+        "description": "Tối ưu quy trình nhập xuất kho, cảnh báo hàng tồn và theo dõi nhà cung cấp.",
+        "status": "Đang thực hiện",
+        "leader": "BaoTran",
+        "members": [
+            "MinhNguyen",
+            "NamLe"
+        ],
+        "start_date": "15/05",
+        "end_date": "20/06"
     },
     {
         "project_id": "HUIT05",
         "name": "Chatbot Hỗ trợ Đào tạo AI",
-        "description": "Giải đáp tự động các thắc mắc về quy chế học vụ và đăng ký môn học."
+        "description": "Giải đáp tự động câu hỏi học vụ, lịch học và quy chế đào tạo.",
+        "status": "Tạm dừng",
+        "leader": "Anhdaden",
+        "members": [
+            "LinhPham",
+            "TrangDo"
+        ],
+        "start_date": "05/05",
+        "end_date": "18/06"
     },
     {
         "project_id": "HUIT06",
         "name": "Hệ thống Điểm danh Sinh viên",
-        "description": "Sử dụng nhận diện khuôn mặt OpenCV để điểm danh sinh viên trong lớp."
+        "description": "Sử dụng nhận diện khuôn mặt OpenCV để điểm danh sinh viên trong lớp.",
+        "status": "Đang thực hiện",
+        "leader": "BaoTran",
+        "members": [
+            "Keasy",
+            "NamLe"
+        ],
+        "start_date": "27/05",
+        "end_date": "28/06"
     },
     {
         "project_id": "HUIT07",
         "name": "Ứng dụng Quản lý Chi tiêu Cá nhân",
-        "description": "Theo dõi thu nhập, chi phí và biểu đồ phân tích tài chính hằng tháng."
+        "description": "Theo dõi thu nhập, chi phí và biểu đồ phân tích tài chính hằng tháng.",
+        "status": "Hoàn thành",
+        "leader": "Anhdaden",
+        "members": [
+            "MinhNguyen"
+        ],
+        "start_date": "01/05",
+        "end_date": "31/05"
     },
     {
         "project_id": "HUIT08",
-        "name": "Cổng Thông tin Việc làm HUIT",
-        "description": "Kết nối doanh nghiệp với sinh viên thực tập ngành An toàn thông tin."
+        "name": "Tool Scan Lỗ hổng Bảo mật Web",
+        "description": "Quét lỗi bảo mật cơ bản như SQL Injection, XSS và cấu hình yếu.",
+        "status": "Đã hủy",
+        "leader": "BaoTran",
+        "members": [
+            "TrangDo"
+        ],
+        "start_date": "10/05",
+        "end_date": "08/06"
     },
     {
         "project_id": "HUIT09",
-        "name": "Tool Scan Lỗ hổng Bảo mật Web",
-        "description": "Quét và phát hiện các lỗi bảo mật cơ bản như SQL Injection, XSS."
-    },
-    {
-        "project_id": "HUIT10",
-        "name": "Hệ thống Quản lý Bãi giữ xe",
-        "description": "Nhận diện biển số xe và quản lý lượt vào ra tự động tại cổng trường."
-    },
-    {
-        "project_id": "HUIT11",
-        "name": "Hệ thống Camera Thông minh",
-        "description": "Giám sát khu vực học tập và phát hiện chuyển động bất thường."
+        "name": "Thiết kế xây dựng trường Đại Học Công Thương Mới",
+        "description": "Vì học sinh thân yêu",
+        "status": "Đang thực hiện",
+        "leader": "Anhdaden",
+        "members": [
+            "Keasy",
+            "LinhPham",
+            "MinhNguyen",
+            "NamLe",
+            "TrangDo"
+        ],
+        "start_date": "30/06",
+        "end_date": "30/11"
     }
 ]

@@ -52,12 +52,16 @@ class UserModel:
         with sqlite3.connect(self.db_name) as conn:
             cursor = conn.cursor()
             admin_password = self._hash_password("Admin@123")
+            cursor.execute("SELECT COUNT(*) FROM users WHERE role='admin' AND is_active=1")
+            if cursor.fetchone()[0] > 0:
+                return
+
             cursor.execute("SELECT id FROM users WHERE username=?", ("Admin",))
             admin_row = cursor.fetchone()
             if admin_row:
                 cursor.execute(
-                    "UPDATE users SET password=?, role='admin', is_active=1 WHERE id=?",
-                    (admin_password, admin_row[0]),
+                    "UPDATE users SET role='admin', is_active=1 WHERE id=?",
+                    (admin_row[0],),
                 )
                 conn.commit()
                 return
@@ -125,6 +129,13 @@ class UserModel:
         with sqlite3.connect(self.db_name) as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT id, username, role, is_active FROM users ORDER BY role='admin' DESC, role, username")
+            return [self._to_user_dict(*row) for row in cursor.fetchall()]
+
+    def list_active_users(self):
+        """Lay danh sach tai khoan dang hoat dong."""
+        with sqlite3.connect(self.db_name) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, username, role, is_active FROM users WHERE is_active=1 ORDER BY username")
             return [self._to_user_dict(*row) for row in cursor.fetchall()]
 
     def get_user(self, user_id):

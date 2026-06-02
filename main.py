@@ -1,3 +1,5 @@
+import tkinter as tk
+
 import customtkinter as ctk
 
 from viewmodels.auth_viewmodel import AuthViewModel
@@ -58,6 +60,7 @@ class ProjectManagerApp(ctk.CTk):
     def show_main_dashboard(self):
         """Hiển thị giao diện chính sau khi đăng nhập thành công."""
         self.clear_window()
+        self.tasks_page = None
         self.geometry("1240x780")
         self.minsize(1040, 680)
 
@@ -68,10 +71,10 @@ class ProjectManagerApp(ctk.CTk):
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
 
-        ctk.CTkLabel(sidebar, text="Project Tracker", font=("Segoe UI", 22, "bold"), text_color=("#1d4ed8", "#60a5fa")).pack(
+        ctk.CTkLabel(sidebar, text="Theo dõi đồ án", font=("Segoe UI", 22, "bold"), text_color=("#1d4ed8", "#60a5fa")).pack(
             pady=(28, 4), padx=18, anchor="w"
         )
-        ctk.CTkLabel(sidebar, text="HUIT workspace", font=("Segoe UI", 12), text_color="#94a3b8").pack(
+        ctk.CTkLabel(sidebar, text="Không gian HUIT", font=("Segoe UI", 12), text_color="#94a3b8").pack(
             pady=(0, 18), padx=18, anchor="w"
         )
         self.create_user_badge(sidebar)
@@ -80,13 +83,12 @@ class ProjectManagerApp(ctk.CTk):
             ("projects", "Dự án", self.show_projects_view),
             ("tasks", "Công việc", self.show_tasks_view),
             ("matrix", "Ma trận", self.show_matrix_view),
-            ("timeline", "Timeline", self.show_timeline_view),
+            ("timeline", "Dòng thời gian", self.show_timeline_view),
             ("stats", "Thống kê", self.show_stats_view),
         ]
-        if self.auth_vm.is_leader_or_admin():
+        if self.auth_vm.is_admin():
             nav_items.append(("logs", "Nhật ký", self.show_logs_view))
             nav_items.append(("tools", "Công cụ", self.show_tools_view))
-        if self.auth_vm.is_admin():
             nav_items.append(("users", "Tài khoản", self.show_users_view))
 
         self.sidebar_buttons = {}
@@ -109,11 +111,15 @@ class ProjectManagerApp(ctk.CTk):
         user = self.auth_vm.current_user or {}
         return user.get("username", "system")
 
+    def current_role(self):
+        """Lay role hien tai de truyen xuong lop nghiep vu."""
+        return self.auth_vm.user_role()
+
     def create_user_badge(self, parent):
         """Hiển thị thông tin tài khoản trên sidebar."""
         user = self.auth_vm.current_user or {}
-        role_map = {"admin": "Admin", "leader": "Leader", "member": "Member"}
-        role = role_map.get(user.get("role"), "Member")
+        role_map = {"admin": "Quản trị viên", "leader": "Trưởng nhóm", "member": "Thành viên"}
+        role = role_map.get(user.get("role"), "Thành viên")
         badge = ctk.CTkFrame(parent, fg_color=("#f1f5f9", "#1f2937"), corner_radius=10)
         badge.pack(fill="x", padx=14, pady=(0, 18))
         ctk.CTkLabel(badge, text=user.get("username", "guest"), font=("Segoe UI", 14, "bold"), anchor="w").pack(
@@ -155,39 +161,39 @@ class ProjectManagerApp(ctk.CTk):
     def show_projects_view(self):
         """Mở màn quản lý dự án."""
         self.clear_content_area()
-        ProjectsView(self.content_area, actor=self.current_actor(), can_manage=self.auth_vm.can_manage_work()).pack(fill="both", expand=True)
+        ProjectsView(self.content_area, actor=self.current_actor(), actor_role=self.current_role()).pack(fill="both", expand=True)
 
     def show_tasks_view(self):
         """Mở màn quản lý công việc."""
         self.clear_content_area()
-        self.tasks_page = TasksView(self.content_area, actor=self.current_actor(), can_manage=self.auth_vm.can_manage_work())
+        self.tasks_page = TasksView(self.content_area, actor=self.current_actor(), actor_role=self.current_role())
         self.tasks_page.pack(fill="both", expand=True)
 
     def show_matrix_view(self):
         """Mở màn ma trận Eisenhower."""
         self.clear_content_area()
-        all_tasks = self.tasks_page.view_model.all_tasks if self.tasks_page else TaskViewModel(actor=self.current_actor(), can_manage=False).all_tasks
+        all_tasks = TaskViewModel(actor=self.current_actor(), actor_role=self.current_role()).scoped_tasks()
         EisenhowerView(self.content_area, all_tasks).pack(fill="both", expand=True)
 
     def show_timeline_view(self):
         """Mở màn timeline dạng Gantt mini."""
         self.clear_content_area()
-        TimelineView(self.content_area, actor=self.current_actor()).pack(fill="both", expand=True)
+        TimelineView(self.content_area, actor=self.current_actor(), actor_role=self.current_role()).pack(fill="both", expand=True)
 
     def show_stats_view(self):
         """Mở màn thống kê tổng quan."""
         self.clear_content_area()
-        StatsView(self.content_area).pack(fill="both", expand=True)
+        StatsView(self.content_area, actor=self.current_actor(), actor_role=self.current_role()).pack(fill="both", expand=True)
 
     def show_logs_view(self):
         """Mở màn nhật ký hệ thống."""
         self.clear_content_area()
-        AuditLogsView(self.content_area, actor=self.current_actor()).pack(fill="both", expand=True)
+        AuditLogsView(self.content_area, actor=self.current_actor(), actor_role=self.current_role()).pack(fill="both", expand=True)
 
     def show_tools_view(self):
         """Mở màn công cụ hệ thống (export/backup)."""
         self.clear_content_area()
-        SystemToolsView(self.content_area, actor=self.current_actor()).pack(fill="both", expand=True)
+        SystemToolsView(self.content_area, actor=self.current_actor(), actor_role=self.current_role()).pack(fill="both", expand=True)
 
     def show_users_view(self):
         """Mở màn quản lý tài khoản (admin)."""
@@ -235,10 +241,10 @@ class ProjectManagerApp(ctk.CTk):
 class StatsView(ctk.CTkFrame):
     """Màn thống kê tổng quan."""
 
-    def __init__(self, master):
+    def __init__(self, master, actor="system", actor_role="member"):
         super().__init__(master, fg_color="transparent")
-        self.project_vm = ProjectViewModel(can_manage=False)
-        self.task_vm = TaskViewModel(can_manage=False)
+        self.project_vm = ProjectViewModel(actor=actor, actor_role=actor_role)
+        self.task_vm = TaskViewModel(actor=actor, actor_role=actor_role)
         self.setup_ui()
 
     def setup_ui(self):
@@ -248,9 +254,9 @@ class StatsView(ctk.CTkFrame):
         cards = ctk.CTkFrame(self, fg_color="transparent")
         cards.pack(fill="x", padx=24, pady=(0, 18))
 
-        self.create_card(cards, "Dự án", len(self.project_vm.all_projects), "#2563eb").pack(side="left", fill="x", expand=True, padx=(0, 8))
+        self.create_card(cards, "Dự án", len(self.project_vm.scoped_projects()), "#2563eb").pack(side="left", fill="x", expand=True, padx=(0, 8))
         self.create_card(cards, "Công việc", stats["total"], "#7c3aed").pack(side="left", fill="x", expand=True, padx=8)
-        self.create_card(cards, "Đang làm", stats["todo"], "#f59e0b").pack(side="left", fill="x", expand=True, padx=8)
+        self.create_card(cards, "Chưa xong", stats["total"] - stats["done"], "#f59e0b").pack(side="left", fill="x", expand=True, padx=8)
         self.create_card(cards, "Hoàn thành", stats["done"], "#16a34a").pack(side="left", fill="x", expand=True, padx=(8, 0))
 
         progress_frame = ctk.CTkFrame(self, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
@@ -262,42 +268,168 @@ class StatsView(ctk.CTkFrame):
         progress.set(stats["progress"] / 100 if stats["total"] else 0)
         progress.pack(fill="x", padx=18, pady=(0, 18))
 
+        labels, weekly_values = self.task_vm.get_weekly_completion()
+        self.create_line_chart(self, "Tiến độ hoàn thành theo tuần", labels, weekly_values).pack(fill="x", padx=24, pady=(0, 18))
+
         lower = ctk.CTkFrame(self, fg_color="transparent")
         lower.pack(fill="both", expand=True, padx=24, pady=(0, 24))
         lower.grid_columnconfigure((0, 1), weight=1, uniform="stats")
         lower.grid_rowconfigure(0, weight=1)
 
-        priority_frame = ctk.CTkFrame(lower, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
-        priority_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
-        ctk.CTkLabel(priority_frame, text="Phân bổ ưu tiên", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 10))
-        for priority, count in stats["priorities"].items():
-            row = ctk.CTkFrame(priority_frame, fg_color="transparent")
-            row.pack(fill="x", padx=18, pady=6)
-            ctk.CTkLabel(row, text=priority, width=55, anchor="w").pack(side="left")
-            bar = ctk.CTkProgressBar(row, height=12)
-            bar.set(count / stats["total"] if stats["total"] else 0)
-            bar.pack(side="left", fill="x", expand=True, padx=12)
-            ctk.CTkLabel(row, text=str(count), width=40).pack(side="right")
+        status_data = {
+            "Chưa làm": len([task for task in self.task_vm.scoped_tasks() if task.status == "Chưa làm"]),
+            "Đang làm": len([task for task in self.task_vm.scoped_tasks() if task.status == "Đang làm"]),
+            "Chờ duyệt": len([task for task in self.task_vm.scoped_tasks() if task.status == "Chờ duyệt"]),
+            "Hoàn thành": stats["done"],
+        }
+        deadline_data = {
+            "Quá hạn": stats["overdue"],
+            "Sắp tới": stats["upcoming"],
+            "Ổn định": max(0, stats["total"] - stats["overdue"] - stats["upcoming"]),
+        }
 
-        deadline_frame = ctk.CTkFrame(lower, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
-        deadline_frame.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
-        ctk.CTkLabel(deadline_frame, text="Theo dõi deadline", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
+        left = ctk.CTkFrame(lower, fg_color="transparent")
+        left.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        right = ctk.CTkFrame(lower, fg_color="transparent")
+        right.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+
+        self.create_bar_chart(left, "Biểu đồ trạng thái", status_data, ["#60a5fa", "#f59e0b", "#a78bfa", "#22c55e"]).pack(
+            fill="both", expand=True, pady=(0, 10)
+        )
+        self.create_bar_chart(left, "Phân bổ ưu tiên", stats["priorities"], ["#ef4444", "#f59e0b", "#22c55e", "#94a3b8"]).pack(
+            fill="both", expand=True
+        )
+        self.create_donut_chart(right, "Theo dõi deadline", deadline_data, ["#ef4444", "#f59e0b", "#22c55e"]).pack(fill="x")
+
+        urgent_tasks = self.task_vm.get_deadline_insights(limit=4)
+        if urgent_tasks:
+            list_frame = ctk.CTkScrollableFrame(right, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
+            list_frame.pack(fill="both", expand=True, pady=(10, 0))
+            ctk.CTkLabel(list_frame, text="Việc cần chú ý", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=12, pady=(10, 6))
+            for task, label, color in urgent_tasks:
+                row = ctk.CTkFrame(list_frame, fg_color=("#ffffff", "#202020"), corner_radius=8)
+                row.pack(fill="x", padx=8, pady=4)
+                ctk.CTkLabel(row, text=task.name, anchor="w", font=("Segoe UI", 12, "bold"), wraplength=280).pack(
+                    fill="x", padx=12, pady=(7, 0)
+                )
+                ctk.CTkLabel(row, text=f"{task.task_id} - {task.deadline or '-'} - {label}", anchor="w", text_color=color).pack(
+                    fill="x", padx=12, pady=(0, 7)
+                )
+
+    def create_bar_chart(self, parent, title, data, colors):
+        panel = ctk.CTkFrame(parent, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
+        ctk.CTkLabel(panel, text=title, font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(14, 8))
+        canvas = tk.Canvas(panel, height=160, bg="#171717", highlightthickness=0)
+        canvas.pack(fill="both", expand=True, padx=18, pady=(0, 14))
+
+        def draw():
+            canvas.delete("all")
+            width = max(canvas.winfo_width(), 320)
+            max_value = max(data.values()) if data else 1
+            max_value = max(max_value, 1)
+            row_height = 34
+            for index, (label, value) in enumerate(data.items()):
+                y = 18 + index * row_height
+                bar_width = int((width - 150) * (value / max_value))
+                color = colors[index % len(colors)]
+                canvas.create_text(4, y, anchor="w", text=label, fill="#e5e7eb", font=("Segoe UI", 10, "bold"))
+                canvas.create_rectangle(110, y - 8, width - 38, y + 8, fill="#374151", outline="")
+                canvas.create_rectangle(110, y - 8, 110 + bar_width, y + 8, fill=color, outline="")
+                canvas.create_text(width - 18, y, anchor="e", text=str(value), fill="#e5e7eb", font=("Segoe UI", 10, "bold"))
+
+        canvas.bind("<Configure>", lambda _event: draw())
+        panel.after(80, draw)
+        return panel
+
+    def create_donut_chart(self, parent, title, data, colors):
+        panel = ctk.CTkFrame(parent, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
+        ctk.CTkLabel(panel, text=title, font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(14, 8))
+        canvas = tk.Canvas(panel, height=190, bg="#171717", highlightthickness=0)
+        canvas.pack(fill="both", expand=True, padx=18, pady=(0, 14))
+
+        def draw():
+            canvas.delete("all")
+            width = max(canvas.winfo_width(), 320)
+            total = sum(data.values())
+            x0, y0, size = 28, 18, 120
+            if total <= 0:
+                canvas.create_oval(x0, y0, x0 + size, y0 + size, outline="#374151", width=24)
+                canvas.create_text(x0 + size / 2, y0 + size / 2, text="0", fill="#e5e7eb", font=("Segoe UI", 24, "bold"))
+            else:
+                start = 90
+                for index, (label, value) in enumerate(data.items()):
+                    extent = 360 * value / total
+                    canvas.create_arc(
+                        x0,
+                        y0,
+                        x0 + size,
+                        y0 + size,
+                        start=start,
+                        extent=-extent,
+                        style="arc",
+                        outline=colors[index % len(colors)],
+                        width=24,
+                    )
+                    start -= extent
+                canvas.create_text(x0 + size / 2, y0 + size / 2, text=str(total), fill="#e5e7eb", font=("Segoe UI", 24, "bold"))
+
+            legend_x = min(width - 190, 210)
+            for index, (label, value) in enumerate(data.items()):
+                y = 42 + index * 34
+                color = colors[index % len(colors)]
+                canvas.create_rectangle(legend_x, y - 7, legend_x + 14, y + 7, fill=color, outline="")
+                canvas.create_text(legend_x + 24, y, anchor="w", text=f"{label}: {value}", fill="#e5e7eb", font=("Segoe UI", 10, "bold"))
+
+        canvas.bind("<Configure>", lambda _event: draw())
+        panel.after(80, draw)
+        return panel
+
+    def create_line_chart(self, parent, title, labels, values):
+        panel = ctk.CTkFrame(parent, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
+        ctk.CTkLabel(panel, text=title, font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(14, 2))
         ctk.CTkLabel(
-            deadline_frame, text=f"Quá hạn: {stats['overdue']}  |  Sắp tới 7 ngày: {stats['upcoming']}", text_color="#94a3b8"
-        ).pack(anchor="w", padx=18, pady=(0, 12))
+            panel,
+            text="Mỗi điểm là số công việc được chuyển sang Hoàn thành trong tuần đó.",
+            text_color="#94a3b8",
+            font=("Segoe UI", 11),
+        ).pack(anchor="w", padx=18, pady=(0, 6))
+        canvas = tk.Canvas(panel, height=170, bg="#171717", highlightthickness=0)
+        canvas.pack(fill="x", padx=18, pady=(0, 14))
 
-        urgent_tasks = self.task_vm.get_deadline_insights(limit=6)
-        if not urgent_tasks:
-            ctk.CTkLabel(deadline_frame, text="Không có công việc cần nhắc deadline.", text_color="#94a3b8").pack(pady=30)
-            return
+        def draw():
+            canvas.delete("all")
+            width = max(canvas.winfo_width(), 420)
+            height = max(canvas.winfo_height(), 160)
+            left, right, top, bottom = 42, 18, 18, 36
+            chart_w = width - left - right
+            chart_h = height - top - bottom
+            max_value = max(values) if values else 0
+            max_value = max(max_value, 1)
 
-        for task, label, color in urgent_tasks:
-            row = ctk.CTkFrame(deadline_frame, fg_color=("#ffffff", "#202020"), corner_radius=8)
-            row.pack(fill="x", padx=18, pady=5)
-            ctk.CTkLabel(row, text=task.name, anchor="w", font=("Segoe UI", 12, "bold"), wraplength=320).pack(fill="x", padx=12, pady=(8, 0))
-            ctk.CTkLabel(row, text=f"{task.task_id} - {task.deadline or '-'} - {label}", anchor="w", text_color=color).pack(
-                fill="x", padx=12, pady=(0, 8)
-            )
+            canvas.create_line(left, top, left, top + chart_h, fill="#475569")
+            canvas.create_line(left, top + chart_h, left + chart_w, top + chart_h, fill="#475569")
+            for step in range(max_value + 1):
+                y = top + chart_h - (step / max_value) * chart_h
+                canvas.create_line(left, y, left + chart_w, y, fill="#273244")
+                canvas.create_text(left - 10, y, text=str(step), anchor="e", fill="#94a3b8", font=("Segoe UI", 8))
+
+            if not labels:
+                return
+            points = []
+            gap = chart_w / max(len(labels) - 1, 1)
+            for index, value in enumerate(values):
+                x = left + index * gap
+                y = top + chart_h - (value / max_value) * chart_h
+                points.append((x, y))
+                canvas.create_text(x, top + chart_h + 16, text=labels[index], fill="#94a3b8", font=("Segoe UI", 8))
+                canvas.create_oval(x - 4, y - 4, x + 4, y + 4, fill="#60a5fa", outline="")
+                canvas.create_text(x, y - 12, text=str(value), fill="#e5e7eb", font=("Segoe UI", 8, "bold"))
+            for first, second in zip(points, points[1:]):
+                canvas.create_line(first[0], first[1], second[0], second[1], fill="#60a5fa", width=3)
+
+        canvas.bind("<Configure>", lambda _event: draw())
+        panel.after(80, draw)
+        return panel
 
     def create_card(self, parent, label, value, color):
         """Tạo một ô số liệu nhỏ."""

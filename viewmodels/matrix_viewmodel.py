@@ -5,3 +5,7 @@ class EisenhowerViewModel:
     def get_tasks_by_priority(self, priority_level):
         """Lọc danh sách công việc theo cấp độ P1, P2, P3 hoặc P4."""
         return [task for task in self.all_tasks if priority_level in task.priority]
+
+    def get_tasks_by_flags(self, urgent, important):
+        """Lọc công việc theo đúng 2 trục Khẩn cấp / Quan trọng."""
+        return [task for task in self.all_tasks if task.is_urgent == urgent and task.is_important == important]
