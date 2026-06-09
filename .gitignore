@@ -16,3 +16,5 @@ __pycache__/
 # Generated data
 backups/
 exports/
+projects.json
+tasks.json
