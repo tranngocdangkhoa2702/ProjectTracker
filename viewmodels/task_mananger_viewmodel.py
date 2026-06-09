@@ -77,6 +77,13 @@ class TaskViewModel:
     def _project_ids(self):
         return [project.get("project_id", "") for project in self._load_projects() if project.get("project_id")]
 
+    def _project_dates(self, project_id):
+        """Tra ve (ngay bat dau, ngay ket thuc) cua du an theo project_id."""
+        for project in self._load_projects():
+            if project.get("project_id") == project_id:
+                return str(project.get("start_date", "") or ""), str(project.get("end_date", "") or "")
+        return "", ""
+
     def _managed_project_ids(self):
         projects = self._load_projects()
         if self._is_admin():
@@ -152,13 +159,15 @@ class TaskViewModel:
     def _validate_common(self, task_id, name, start_date, deadline, priority, status, project_id):
         if not task_id or not name:
             return False, "ID và tên công việc không được để trống."
-        if start_date and not self._validate_deadline(start_date):
+        if not start_date:
+            return False, "Ngày bắt đầu công việc không được để trống."
+        if not self._validate_deadline(start_date):
             return False, "Ngày bắt đầu phải đúng định dạng dd/mm và là ngày hợp lệ."
         if not deadline:
             return False, "Hạn hoàn thành không được để trống."
         if not self._validate_deadline(deadline):
             return False, "Hạn hoàn thành phải đúng định dạng dd/mm và là ngày hợp lệ."
-        if start_date and self._parse_deadline(start_date) > self._parse_deadline(deadline):
+        if self._parse_deadline(start_date) > self._parse_deadline(deadline):
             return False, "Ngày bắt đầu công việc không được sau hạn hoàn thành."
         if priority not in PRIORITIES:
             return False, "Mức ưu tiên không hợp lệ."
@@ -168,6 +177,15 @@ class TaskViewModel:
             return False, "Công việc phải được gắn với một dự án."
         if project_id not in self._project_ids():
             return False, "Dự án được chọn không tồn tại."
+
+        # Cong viec phai nam trong khoang thoi gian cua du an.
+        project_start, project_end = self._project_dates(project_id)
+        if project_start and self._validate_deadline(project_start):
+            if self._parse_deadline(start_date) < self._parse_deadline(project_start):
+                return False, f"Ngày bắt đầu công việc không được sớm hơn ngày bắt đầu dự án ({project_start})."
+        if project_end and self._validate_deadline(project_end):
+            if self._parse_deadline(deadline) > self._parse_deadline(project_end):
+                return False, f"Hạn hoàn thành công việc không được trễ hơn ngày kết thúc dự án ({project_end})."
         return True, ""
 
     def can_create_task(self):
@@ -374,6 +392,8 @@ class TaskViewModel:
             return False, message
         if not self._is_admin() and status not in self.get_edit_status_options(None):
             return False, "Trạng thái khởi tạo công việc không hợp lệ với vai trò hiện tại."
+        if not assignee:
+            return False, "Vui lòng chọn người được giao cho công việc."
         if not self._assignee_is_valid(assignee):
             return False, "Người được giao phải là tài khoản thành viên đang hoạt động."
         allowed_project_ids = self._visible_project_ids() if self.actor_role == "member" else self._managed_project_ids()
@@ -449,6 +469,8 @@ class TaskViewModel:
             new_deadline = self._parse_deadline(deadline)
             if old_deadline and new_deadline and new_deadline > old_deadline:
                 return False, "Muốn tăng hạn hoàn thành cho thành viên, trưởng nhóm phải gửi yêu cầu gia hạn lên quản trị viên."
+        if not assignee:
+            return False, "Vui lòng chọn người được giao cho công việc."
         if not self._assignee_is_valid(assignee):
             return False, "Người được giao phải là tài khoản thành viên đang hoạt động."
         if project_id not in self._managed_project_ids():

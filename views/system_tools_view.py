@@ -22,7 +22,12 @@ class SystemToolsView(ctk.CTkFrame):
         ctk.CTkLabel(box, text="Xuất danh sách dự án và công việc theo phạm vi quyền hiện tại.", text_color="#94a3b8").pack(
             anchor="w", padx=16, pady=(0, 10)
         )
-        ctk.CTkButton(box, text="Xuất báo cáo", command=self.export_reports).pack(anchor="w", padx=16, pady=(0, 14))
+        export_buttons = ctk.CTkFrame(box, fg_color="transparent")
+        export_buttons.pack(anchor="w", padx=16, pady=(0, 14))
+        ctk.CTkButton(export_buttons, text="Xuất CSV", command=self.export_reports).pack(side="left")
+        ctk.CTkButton(
+            export_buttons, text="Xuất Excel (.xlsx)", fg_color="#16a34a", hover_color="#15803d", command=self.export_excel
+        ).pack(side="left", padx=(10, 0))
 
         box2 = ctk.CTkFrame(self, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
         box2.pack(fill="x", padx=24, pady=(0, 24))
@@ -56,6 +61,14 @@ class SystemToolsView(ctk.CTkFrame):
         self.append_status(message)
         if success:
             messagebox.showinfo("Thành công", "Đã xuất báo cáo CSV.")
+        else:
+            messagebox.showwarning("Thông báo", message)
+
+    def export_excel(self):
+        success, message = self.vm.export_to_excel()
+        self.append_status(message)
+        if success:
+            messagebox.showinfo("Thành công", "Đã xuất báo cáo Excel (.xlsx) bằng Pandas.")
         else:
             messagebox.showwarning("Thông báo", message)
 

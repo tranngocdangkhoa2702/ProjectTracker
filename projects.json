@@ -14,7 +14,7 @@
     },
     {
         "project_id": "HUIT02",
-        "name": "Ứng dụng Theo dõi Tiến độ Đồ án",
+        "name": "Ứng dụng Theo dõi Tiến độ Đồ á",
         "description": "Phần mềm desktop sử dụng Python giúp sinh viên quản lý task, deadline và phân quyền.",
         "status": "Đang thực hiện",
         "leader": "Anhdaden",
@@ -116,5 +116,37 @@
         ],
         "start_date": "30/06",
         "end_date": "30/11"
+    },
+    {
+        "project_id": "HUIT10",
+        "name": "HAHAHAH",
+        "description": "HAHA",
+        "status": "Lên kế hoạch",
+        "leader": "Admin",
+        "members": [
+            "Keasy",
+            "LinhPham",
+            "MinhNguyen",
+            "NamLe",
+            "TrangDo"
+        ],
+        "start_date": "01/06",
+        "end_date": "30/06"
+    },
+    {
+        "project_id": "HUIT11",
+        "name": "HIHIHIH",
+        "description": "HAHAAHAH",
+        "status": "Lên kế hoạch",
+        "leader": "Anhdaden",
+        "members": [
+            "Keasy",
+            "LinhPham",
+            "MinhNguyen",
+            "NamLe",
+            "TrangDo"
+        ],
+        "start_date": "01/06",
+        "end_date": "30/06"
     }
 ]

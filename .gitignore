@@ -9,3 +9,10 @@ __pycache__/
 # Database
 *.db
 *.sqlite3
+
+# Editor
+.vscode/
+
+# Generated data
+backups/
+exports/

@@ -1,6 +1,8 @@
 import tkinter as tk
 
 import customtkinter as ctk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
 from viewmodels.auth_viewmodel import AuthViewModel
 from viewmodels.project_manager_viewmodel import ProjectViewModel
@@ -74,7 +76,7 @@ class ProjectManagerApp(ctk.CTk):
         ctk.CTkLabel(sidebar, text="Theo dõi đồ án", font=("Segoe UI", 22, "bold"), text_color=("#1d4ed8", "#60a5fa")).pack(
             pady=(28, 4), padx=18, anchor="w"
         )
-        ctk.CTkLabel(sidebar, text="Không gian HUIT", font=("Segoe UI", 12), text_color="#94a3b8").pack(
+        ctk.CTkLabel(sidebar, text="Nhóm 6_Đề Tài 15_Project Tracker", font=("Segoe UI", 12), text_color="#94a3b8").pack(
             pady=(0, 18), padx=18, anchor="w"
         )
         self.create_user_badge(sidebar)
@@ -249,9 +251,12 @@ class StatsView(ctk.CTkFrame):
 
     def setup_ui(self):
         """Tạo giao diện thống kê."""
-        ctk.CTkLabel(self, text="Thống kê tổng quan", font=("Segoe UI", 26, "bold")).pack(anchor="w", padx=24, pady=(24, 14))
+        container = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        container.pack(fill="both", expand=True)
+
+        ctk.CTkLabel(container, text="Thống kê tổng quan", font=("Segoe UI", 26, "bold")).pack(anchor="w", padx=24, pady=(24, 14))
         stats = self.task_vm.get_stats()
-        cards = ctk.CTkFrame(self, fg_color="transparent")
+        cards = ctk.CTkFrame(container, fg_color="transparent")
         cards.pack(fill="x", padx=24, pady=(0, 18))
 
         self.create_card(cards, "Dự án", len(self.project_vm.scoped_projects()), "#2563eb").pack(side="left", fill="x", expand=True, padx=(0, 8))
@@ -259,7 +264,7 @@ class StatsView(ctk.CTkFrame):
         self.create_card(cards, "Chưa xong", stats["total"] - stats["done"], "#f59e0b").pack(side="left", fill="x", expand=True, padx=8)
         self.create_card(cards, "Hoàn thành", stats["done"], "#16a34a").pack(side="left", fill="x", expand=True, padx=(8, 0))
 
-        progress_frame = ctk.CTkFrame(self, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
+        progress_frame = ctk.CTkFrame(container, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
         progress_frame.pack(fill="x", padx=24, pady=(0, 18))
         ctk.CTkLabel(progress_frame, text=f"Tiến độ hoàn thành: {stats['progress']}%", font=("Segoe UI", 16, "bold")).pack(
             anchor="w", padx=18, pady=(16, 8)
@@ -269,9 +274,9 @@ class StatsView(ctk.CTkFrame):
         progress.pack(fill="x", padx=18, pady=(0, 18))
 
         labels, weekly_values = self.task_vm.get_weekly_completion()
-        self.create_line_chart(self, "Tiến độ hoàn thành theo tuần", labels, weekly_values).pack(fill="x", padx=24, pady=(0, 18))
+        self.create_matplotlib_chart(container, "Tiến độ hoàn thành theo tuần", labels, weekly_values).pack(fill="x", padx=24, pady=(0, 18))
 
-        lower = ctk.CTkFrame(self, fg_color="transparent")
+        lower = ctk.CTkFrame(container, fg_color="transparent")
         lower.pack(fill="both", expand=True, padx=24, pady=(0, 24))
         lower.grid_columnconfigure((0, 1), weight=1, uniform="stats")
         lower.grid_rowconfigure(0, weight=1)
@@ -303,8 +308,8 @@ class StatsView(ctk.CTkFrame):
 
         urgent_tasks = self.task_vm.get_deadline_insights(limit=4)
         if urgent_tasks:
-            list_frame = ctk.CTkScrollableFrame(right, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
-            list_frame.pack(fill="both", expand=True, pady=(10, 0))
+            list_frame = ctk.CTkFrame(right, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
+            list_frame.pack(fill="x", pady=(10, 0))
             ctk.CTkLabel(list_frame, text="Việc cần chú ý", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=12, pady=(10, 6))
             for task, label, color in urgent_tasks:
                 row = ctk.CTkFrame(list_frame, fg_color=("#ffffff", "#202020"), corner_radius=8)
@@ -429,6 +434,36 @@ class StatsView(ctk.CTkFrame):
 
         canvas.bind("<Configure>", lambda _event: draw())
         panel.after(80, draw)
+        return panel
+
+    def create_matplotlib_chart(self, parent, title, labels, values):
+        """Vẽ biểu đồ đường (Line chart) bằng Matplotlib và nhúng trực tiếp vào giao diện.
+
+        Số liệu lấy từ TaskViewModel.get_weekly_completion() do nhóm Backend (SV1) cung cấp.
+        Biểu đồ có đủ Title, nhãn trục X/Y và Legend theo yêu cầu.
+        """
+        panel = ctk.CTkFrame(parent, fg_color=("#f3f4f6", "#171717"), corner_radius=10)
+        ctk.CTkLabel(panel, text=f"{title} (Matplotlib)", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(14, 4))
+
+        figure = Figure(figsize=(7, 2.7), dpi=100, facecolor="#171717")
+        axes = figure.add_subplot(111)
+        axes.set_facecolor("#171717")
+        axes.plot(labels, values, marker="o", color="#60a5fa", linewidth=2, label="Công việc hoàn thành")
+        axes.set_title(title, color="#e5e7eb")
+        axes.set_xlabel("Tuần (ngày bắt đầu)", color="#cbd5e1")
+        axes.set_ylabel("Số công việc", color="#cbd5e1")
+        axes.tick_params(colors="#94a3b8")
+        for spine in axes.spines.values():
+            spine.set_color("#475569")
+        axes.grid(True, color="#273244", linestyle="--", linewidth=0.6)
+        axes.legend(facecolor="#202020", edgecolor="#475569", labelcolor="#e5e7eb")
+        max_value = max(values) if values else 0
+        axes.set_yticks(range(0, max_value + 1))
+        figure.tight_layout()
+
+        canvas = FigureCanvasTkAgg(figure, master=panel)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True, padx=12, pady=(0, 12))
         return panel
 
     def create_card(self, parent, label, value, color):
