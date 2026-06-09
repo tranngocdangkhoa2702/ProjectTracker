@@ -7,14 +7,13 @@ __pycache__/
 *.pyc
 
 # Database
-*.db
 *.sqlite3
 
 # Editor
 .vscode/
 
-# Generated data
+# Generated data (artifact sinh ra khi sử dụng)
 backups/
 exports/
-projects.json
-tasks.json
+
+# Giữ lại dữ liệu mẫu để chạy demo: database.db, projects.json, tasks.json
